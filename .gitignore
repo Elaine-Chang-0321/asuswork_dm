@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+temp_git_cache/
+config.ini
+analyze_with_llm.py_v0.py
