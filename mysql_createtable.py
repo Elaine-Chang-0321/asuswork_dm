@@ -10,19 +10,18 @@ import mysql_connect
 TARGET_DB_NAME = "dataserviceflow_dm"
 
 # 2. 這是你要建立的資料表名稱
-TARGET_TABLE_NAME = "columnlist"
+TARGET_TABLE_NAME = "modellist"
 
 # 3. 這是資料表的欄位定義 (欄位名稱 加上 資料型態，用逗號隔開)
 # 常見型態參考：
 # INT: 整數 / VARCHAR(255): 長度255的字串 / DATETIME: 日期時間 / TEXT: 長篇文字
 TARGET_TABLE_COLUMNS = """
-    column_id VARCHAR(255) PRIMARY KEY,
-    column_name VARCHAR(255),
-    table_name VARCHAR(255),
-    column_type VARCHAR(255),
-    definition LONGTEXT,
-    sql_expression LONGTEXT,
-    source_sql_fragment LONGTEXT
+    model_id VARCHAR(255) PRIMARY KEY,
+    model_name VARCHAR(255),
+    project VARCHAR(255),
+    model_summary LONGTEXT,
+    upstream_model VARCHAR(255),
+    dw_ins_time DATETIME
 """
 # ==============================================================================
 
