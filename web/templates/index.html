@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Column Explorer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --surface-hover: #f1f5f9;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-gradient: linear-gradient(135deg, #3b82f6, #6366f1);
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05);
+            --radius-md: 0.5rem;
+            --radius-lg: 1rem;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.05), transparent 25%);
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 2rem 3rem;
+            flex-grow: 1;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            background: var(--surface-color);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .controls:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        select {
+            appearance: none;
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1rem;
+            outline: none;
+            box-shadow: var(--shadow-sm);
+        }
+
+        select:hover {
+            border-color: var(--accent-color);
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: var(--bg-color);
+        }
+
+        .table-container {
+            background: var(--surface-color);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: none;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th,
+        td {
+            padding: 1rem 1.5rem;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.875rem;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: var(--surface-hover);
+        }
+
+        .badge-type {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            background: #eff6ff;
+            color: #2563eb;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid #bfdbfe;
+        }
+
+        a.badge-table {
+            color: #7c3aed;
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #f5f3ff;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            border: 1px solid #ddd6fe;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-block;
+            margin-bottom: 0.25rem;
+        }
+
+        a.badge-table:hover {
+            background: #ede9fe;
+            color: #5b21b6;
+            border-color: #c4b5fd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .code-block {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: #f8fafc;
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            color: #334155;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .code-block::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .code-block::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+
+        .code-block::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .code-block::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        .loader {
+            display: none;
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e0e7ff;
+            border-radius: 50%;
+            border-top-color: var(--accent-color);
+            animation: spin 1s linear infinite;
+            margin: 4rem auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="header">
+        <h1>Model Column Explorer</h1>
+    </header>
+
+    <main class="container">
+        <!-- 下拉式選單區塊 -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="model-select">Select Model (分析來源腳本)</label>
+                <select id="model-select">
+                    <option value="">-- 載入中... --</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="table-select">Select Target Table (產出表格)</label>
+                <select id="table-select" disabled>
+                    <option value="">-- 請先選擇 Model --</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loader" class="loader"></div>
+
+        <div id="empty-state" class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <h2>選擇 Model 與 Table 開始探索該表格之欄位資訊</h2>
+            <p>透過 Flask 後端自動與您的 MySQL 資料庫進行連線</p>
+        </div>
+
+        <!-- 結果顯示區塊 -->
+        <div id="table-container" class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%">Column Name</th>
+                        <th style="width: 8%">Type</th>
+                        <th style="width: 17%">Source Table</th>
+                        <th style="width: 25%">Logic / Expression (白話說明)</th>
+                        <th style="width: 35%">Source SQL Fragment</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- JavaScript 將把結果行插入於此 -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const modelSelect = document.getElementById('model-select');
+            const tableSelect = document.getElementById('table-select');
+            const tableContainer = document.getElementById('table-container');
+            const tableBody = document.getElementById('table-body');
+            const emptyState = document.getElementById('empty-state');
+            const loader = document.getElementById('loader');
+
+            // 初始化時抓取所有 Models
+            fetch('/api/models')
+                .then(res => res.json())
+                .then(data => {
+                    modelSelect.innerHTML = '<option value="">-- 請選擇 Model --</option>';
+                    if (data.models && data.models.length > 0) {
+                        data.models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            modelSelect.appendChild(option);
+                        });
+                    } else {
+                        modelSelect.innerHTML = '<option value="">-- 資料庫中尚無資料 --</option>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching models:', err);
+                    modelSelect.innerHTML = '<option value="">-- 連線失敗 --</option>';
+                });
+
+            // 當選擇的模型改變時，更新 Tables 選單
+            modelSelect.addEventListener('change', (e) => {
+                const selectedModel = e.target.value;
+
+                // 重製 UI
+                tableSelect.innerHTML = '<option value="">-- 載入中... --</option>';
+                tableSelect.disabled = true;
+                tableContainer.style.display = 'none';
+                emptyState.style.display = 'block';
+
+                if (!selectedModel) {
+                    tableSelect.innerHTML = '<option value="">-- 請先選擇 Model --</option>';
+                    return;
+                }
+
+                // 呼叫 API 取得針對此 model 的 tables
+                fetch(`/api/tables?model=${encodeURIComponent(selectedModel)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        tableSelect.innerHTML = '<option value="">-- 請選擇 Table --</option>';
+                        if (data.tables && data.tables.length > 0) {
+                            data.tables.forEach(table => {
+                                const option = document.createElement('option');
+                                option.value = table;
+                                option.textContent = table;
+                                tableSelect.appendChild(option);
+                            });
+                            tableSelect.disabled = false;
+                        } else {
+                            tableSelect.innerHTML = '<option value="">-- 此模型無表格產出 --</option>';
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error fetching tables:', err);
+                        tableSelect.innerHTML = '<option value="">-- 連線失敗 --</option>';
+                    });
+            });
+
+            // 當選擇的 Table 改變時，更新底下的查詢結果
+            tableSelect.addEventListener('change', (e) => {
+                const selectedModel = modelSelect.value;
+                const selectedTable = e.target.value;
+
+                if (!selectedModel || !selectedTable) {
+                    tableContainer.style.display = 'none';
+                    emptyState.style.display = 'block';
+                    return;
+                }
+
+                emptyState.style.display = 'none';
+                tableContainer.style.display = 'none';
+                loader.style.display = 'block';
+
+                // 呼叫 API 取得針對此 model 和 table 的 columns
+                fetch(`/api/columns?model=${encodeURIComponent(selectedModel)}&table=${encodeURIComponent(selectedTable)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        loader.style.display = 'none';
+                        tableBody.innerHTML = '';
+
+                        if (data.columns && data.columns.length > 0) {
+                            data.columns.forEach(col => {
+                                const tr = document.createElement('tr');
+
+                                const formatSourceTable = (src) => {
+                                    if (!src || src.toLowerCase() === 'unknown' || src.toLowerCase() === '無') {
+                                        return '<span style="color: var(--border-color); font-style: italic;">Unknown / Derived</span>';
+                                    }
+                                    const tables = src.split(/[,\/]/).map(s => s.trim()).filter(s => s);
+                                    return tables.map(t => `<a href="#" class="badge-table source-link" data-table="${escapeHtml(t)}" title="點擊查看 ${escapeHtml(t)} 的欄位">${escapeHtml(t)}</a>`).join('<br>');
+                                };
+
+                                tr.innerHTML = `
+                                    <td style="font-weight: 500;">${escapeHtml(col.column_name)}</td>
+                                    <td>${col.column_type ? `<span class="badge-type">${escapeHtml(col.column_type)}</span>` : '-'}</td>
+                                    <td>${formatSourceTable(col.source_table)}</td>
+                                    <td style="color: var(--text-main); font-weight: 500;">${escapeHtml(col.sql_expression)}</td>
+                                    <td>
+                                        ${col.source_sql_fragment ? `<div class="code-block">${escapeHtml(col.source_sql_fragment)}</div>` : '<span style="color: var(--text-muted); font-style: italic;">No Fragment</span>'}
+                                    </td>
+                                `;
+                                tableBody.appendChild(tr);
+                            });
+                            tableContainer.style.display = 'block';
+                        } else {
+                            emptyState.innerHTML = '<h2>沒有找到任何欄位資料</h2>';
+                            emptyState.style.display = 'block';
+                        }
+                    })
+                    .catch(err => {
+                        loader.style.display = 'none';
+                        emptyState.innerHTML = '<h2>載入失敗</h2><p>請檢查 Flask 伺服器狀態</p>';
+                        emptyState.style.display = 'block';
+                        console.error('Error fetching columns:', err);
+                    });
+            });
+
+            // 當點擊 Source Table 的標籤時
+            tableBody.addEventListener('click', async (e) => {
+                const link = e.target.closest('.source-link');
+                if (link) {
+                    e.preventDefault();
+                    const targetTable = link.getAttribute('data-table');
+
+                    try {
+                        // 嘗試反查出它是哪一個 Model 產生的
+                        const res = await fetch(`/api/find_model?table=${encodeURIComponent(targetTable)}`);
+                        const data = await res.json();
+
+                        if (data.model) {
+                            // 設定 Model 選單
+                            modelSelect.value = data.model;
+
+                            // 更新 Table 選單
+                            const tRes = await fetch(`/api/tables?model=${encodeURIComponent(data.model)}`);
+                            const tData = await tRes.json();
+
+                            tableSelect.innerHTML = '<option value="">-- 請選擇 Table --</option>';
+                            tData.tables.forEach(table => {
+                                const option = document.createElement('option');
+                                option.value = table;
+                                option.textContent = table;
+                                tableSelect.appendChild(option);
+                            });
+                            tableSelect.disabled = false;
+
+                            // 設定目標 Table 並觸發更新
+                            tableSelect.value = data.exact_table_name;
+                            tableSelect.dispatchEvent(new Event('change'));
+
+                            // 捲動到頂部
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                            alert(`資料庫中目前的分析紀錄，找不到名為 "${targetTable}" 的產出結構紀錄！\n這代表它可能是一張尚未被分析的最上游原始表 (例如 ods 層)。`);
+                        }
+                    } catch (err) {
+                        console.error('Error finding model:', err);
+                        alert("查詢失敗，請檢查網路連線。");
+                    }
+                }
+            });
+
+            function escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe.toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+        });
+    </script>
+</body>
+
+</html>
